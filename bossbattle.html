@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>The Wayfinder's Sea Trial</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --ocean:#0a1628;--ocean2:#0d2244;--gold:#c8922a;--gold2:#f0b830;
+  --cream:#fdf6e3;--ink:#2d1f08;--red:#e63946;--blue:#457b9d;
+  --yellow:#f4a261;--green:#2a9d8f;--white:#fff;
+}
+html,body{height:100%;font-family:'Lato',sans-serif;background:var(--ocean);color:var(--white);overflow:hidden}
+.screen{display:none;position:fixed;inset:0;overflow:auto}
+.screen.active{display:flex;flex-direction:column;align-items:center;justify-content:center}
+
+/* ── SETUP ── */
+#setup{gap:1.5rem;padding:2rem;background:radial-gradient(ellipse at top,var(--ocean2),var(--ocean))}
+.logo{font-family:'Cinzel',serif;font-size:clamp(1.4rem,4vw,2.5rem);color:var(--gold2);text-align:center;line-height:1.2}
+.logo small{display:block;font-size:.55em;color:rgba(255,255,255,.6);letter-spacing:.2em;font-weight:400;margin-top:.3rem}
+.week-btns{display:flex;gap:1rem;flex-wrap:wrap;justify-content:center}
+.btn{font-family:'Cinzel',serif;border:none;cursor:pointer;border-radius:10px;font-size:1rem;letter-spacing:.05em;transition:.2s;padding:.75rem 1.8rem}
+.btn-gold{background:linear-gradient(135deg,var(--gold),var(--gold2));color:var(--ink);font-weight:700}
+.btn-gold:hover{filter:brightness(1.1);transform:translateY(-2px)}
+.btn-outline{background:transparent;border:2px solid var(--gold);color:var(--gold)}
+.btn-outline:hover{background:rgba(200,146,42,.15)}
+.btn-player{background:linear-gradient(135deg,#1a3a6e,#2a5ca8);color:#fff;border:2px solid #4a7fd4}
+.divider{color:rgba(255,255,255,.3);font-size:.85rem;letter-spacing:.15em}
+
+/* ── HOST: LOBBY ── */
+#host-lobby{padding:1.5rem;gap:1rem;background:radial-gradient(ellipse at top,var(--ocean2),var(--ocean))}
+.room-box{background:rgba(255,255,255,.06);border:1px solid var(--gold);border-radius:16px;padding:1.5rem;text-align:center;max-width:380px;width:100%}
+.room-code{font-family:'Cinzel',serif;font-size:3.5rem;color:var(--gold2);letter-spacing:.2em;font-weight:900}
+.room-label{font-size:.75rem;color:rgba(255,255,255,.5);letter-spacing:.15em;text-transform:uppercase;margin-bottom:.5rem}
+#qr-code{margin:.8rem auto;width:160px;height:160px}
+#qr-code canvas,#qr-code img{border-radius:8px}
+.player-list{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center;max-width:600px}
+.player-chip{background:rgba(200,146,42,.2);border:1px solid var(--gold);border-radius:20px;padding:.3rem .9rem;font-size:.85rem;display:flex;align-items:center;gap:.4rem}
+.player-chip .boat{font-size:1rem}
+.waiting-msg{color:rgba(255,255,255,.5);font-size:.9rem;font-style:italic}
+.host-start-btn{font-size:1.3rem;padding:1rem 3rem;margin-top:.5rem}
+
+/* ── HOST: QUESTION ── */
+#host-question{padding:1.5rem;gap:1rem;background:var(--ocean)}
+.q-header{display:flex;align-items:center;justify-content:space-between;width:100%;max-width:900px}
+.q-num{font-family:'Cinzel',serif;font-size:.85rem;color:rgba(255,255,255,.5);letter-spacing:.12em}
+.q-answered{font-size:.9rem;color:var(--gold)}
+.timer-ring{position:relative;width:72px;height:72px}
+.timer-ring svg{transform:rotate(-90deg)}
+.timer-ring circle{fill:none;stroke:rgba(255,255,255,.15);stroke-width:5}
+.timer-ring .progress{stroke:var(--gold2);stroke-width:5;stroke-linecap:round;transition:stroke-dashoffset .9s linear}
+.timer-num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Cinzel',serif;font-size:1.4rem;font-weight:900;color:var(--gold2)}
+.q-text{font-size:clamp(1.3rem,3vw,2.2rem);font-weight:700;text-align:center;max-width:800px;line-height:1.4;color:#fff}
+.options-grid{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;width:100%;max-width:860px}
+.option-host{border-radius:12px;padding:1rem 1.4rem;font-size:1.1rem;font-weight:700;display:flex;align-items:center;gap:.75rem;border:none;color:#fff;cursor:default;text-align:left}
+.opt-A{background:#c0392b}.opt-B{background:#2980b9}.opt-C{background:#d4a017}.opt-D{background:#27ae60}
+.opt-letter{background:rgba(0,0,0,.25);border-radius:6px;width:2rem;height:2rem;display:flex;align-items:center;justify-content:center;font-size:.95rem;flex-shrink:0}
+.answer-tally{display:flex;gap:.5rem;font-size:.8rem;color:rgba(255,255,255,.6)}
+.tally-dot{width:.5rem;height:.5rem;border-radius:50%;background:var(--gold);display:inline-block}
+
+/* ── HOST: REVEAL ── */
+#host-reveal{padding:1.5rem;gap:1rem;background:var(--ocean);align-items:center}
+.correct-banner{font-family:'Cinzel',serif;font-size:1rem;letter-spacing:.15em;text-transform:uppercase;color:var(--gold);margin-bottom:.2rem}
+.correct-answer{font-size:clamp(1.4rem,3vw,2.2rem);font-weight:700;text-align:center;max-width:700px}
+.options-reveal{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;width:100%;max-width:860px}
+.option-reveal{border-radius:10px;padding:.8rem 1.2rem;font-size:1rem;font-weight:700;display:flex;align-items:center;gap:.6rem;opacity:.4}
+.option-reveal.correct-opt{opacity:1;box-shadow:0 0 0 3px #fff}
+.mini-scores{display:flex;gap:.5rem;flex-wrap:wrap;justify-content:center;max-width:860px}
+.score-chip{background:rgba(255,255,255,.08);border-radius:8px;padding:.4rem .8rem;text-align:center;min-width:80px}
+.score-chip .sc-name{font-size:.7rem;color:rgba(255,255,255,.6);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:70px}
+.score-chip .sc-pts{font-family:'Cinzel',serif;font-size:1rem;color:var(--gold2)}
+.sc-delta{font-size:.7rem;color:#2a9d8f}
+
+/* ── RACE SCREEN ── */
+#host-race{padding:1.5rem 1rem;gap:.8rem;background:var(--ocean)}
+.race-title{font-family:'Cinzel',serif;font-size:1.2rem;color:var(--gold2);letter-spacing:.1em}
+.race-track{position:relative;width:100%;max-width:900px;background:rgba(255,255,255,.04);border-radius:16px;border:1px solid rgba(255,255,255,.1);padding:1rem 3rem 1rem 1rem;overflow:hidden}
+.race-ocean{position:absolute;inset:0;background:linear-gradient(180deg,#0a2a4a 0%,#0d3a6a 100%);opacity:.5;border-radius:16px}
+.race-start,.race-end{position:absolute;top:0;bottom:0;width:3px;display:flex;align-items:center;padding:.2rem}
+.race-start{left:60px;background:rgba(255,255,255,.2)}
+.race-end{right:60px;background:var(--gold);box-shadow:0 0 10px var(--gold)}
+.race-end-label{position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:.65rem;color:var(--gold);writing-mode:vertical-rl;letter-spacing:.1em;font-family:'Cinzel',serif}
+.race-row{position:relative;height:52px;display:flex;align-items:center}
+.race-name{position:absolute;left:0;width:56px;font-size:.72rem;text-align:right;padding-right:6px;color:rgba(255,255,255,.7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.race-boat{position:absolute;font-size:1.6rem;transition:left 1.2s cubic-bezier(.34,1.56,.64,1);filter:drop-shadow(0 2px 4px rgba(0,0,0,.5))}
+.race-score{position:absolute;right:4px;font-family:'Cinzel',serif;font-size:.8rem;color:var(--gold2)}
+.race-wave{position:absolute;inset:0;opacity:.05;background:repeating-linear-gradient(90deg,transparent,transparent 30px,rgba(255,255,255,.3) 31px)}
+
+/* ── FINAL ── */
+#host-final{padding:1.5rem;gap:1rem;overflow-y:auto;background:var(--ocean)}
+.final-title{font-family:'Cinzel',serif;font-size:clamp(1.5rem,4vw,2.5rem);color:var(--gold2);text-align:center}
+.podium{display:flex;align-items:flex-end;justify-content:center;gap:.5rem;margin:.5rem 0}
+.podium-step{display:flex;flex-direction:column;align-items:center;gap:.3rem}
+.podium-step .medal{font-size:2rem}
+.podium-step .p-name{font-weight:700;font-size:.9rem;text-align:center;max-width:90px;word-break:break-word}
+.podium-step .p-score{font-family:'Cinzel',serif;color:var(--gold2);font-size:1rem}
+.podium-step .p-block{background:var(--gold);border-radius:6px 6px 0 0;width:80px}
+.podium-1 .p-block{height:80px;background:linear-gradient(135deg,var(--gold),var(--gold2))}
+.podium-2 .p-block{height:55px;background:rgba(200,200,200,.4)}
+.podium-3 .p-block{height:38px;background:rgba(150,100,50,.5)}
+.leaderboard{width:100%;max-width:600px;background:rgba(255,255,255,.04);border-radius:12px;overflow:hidden;border:1px solid rgba(255,255,255,.1)}
+.lb-row{display:grid;grid-template-columns:2rem 1fr auto;gap:.5rem;padding:.6rem 1rem;border-bottom:1px solid rgba(255,255,255,.06);align-items:center;font-size:.9rem}
+.lb-row:last-child{border-bottom:none}
+.lb-rank{font-family:'Cinzel',serif;color:var(--gold);font-weight:700;text-align:center}
+.lb-score{font-family:'Cinzel',serif;color:var(--gold2)}
+.print-btn{font-size:1rem;padding:.7rem 2rem}
+
+/* ── PLAYER: JOIN ── */
+#player-join{padding:2rem;gap:1.2rem;background:radial-gradient(ellipse at bottom,#1a3a6e,var(--ocean))}
+.join-title{font-family:'Cinzel',serif;font-size:1.8rem;color:var(--gold2);text-align:center}
+.join-sub{color:rgba(255,255,255,.6);font-size:.9rem;text-align:center}
+.name-input{width:100%;max-width:300px;padding:.9rem 1.2rem;border-radius:10px;border:2px solid var(--gold);background:rgba(255,255,255,.08);color:#fff;font-size:1.1rem;font-family:'Lato',sans-serif;text-align:center;outline:none}
+.name-input::placeholder{color:rgba(255,255,255,.3)}
+.name-input:focus{border-color:var(--gold2);background:rgba(255,255,255,.12)}
+.join-note{font-size:.78rem;color:rgba(255,255,255,.4);text-align:center;max-width:280px}
+
+/* ── PLAYER: LOBBY ── */
+#player-lobby{padding:2rem;gap:1rem;background:radial-gradient(ellipse at bottom,#1a3a6e,var(--ocean))}
+.your-name{font-family:'Cinzel',serif;font-size:1.5rem;color:var(--gold2);text-align:center}
+.lobby-status{font-size:.9rem;color:rgba(255,255,255,.5);text-align:center}
+.lobby-crew{font-size:.85rem;color:rgba(255,255,255,.4);text-align:center}
+.wave-dots span{display:inline-block;animation:bounce .9s infinite;width:.5rem;height:.5rem;border-radius:50%;background:var(--gold);margin:.2rem}
+.wave-dots span:nth-child(2){animation-delay:.15s}
+.wave-dots span:nth-child(3){animation-delay:.3s}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+
+/* ── PLAYER: ANSWER ── */
+#player-answer{padding:1rem;gap:.8rem;background:var(--ocean)}
+.p-q-num{font-size:.75rem;color:rgba(255,255,255,.4);letter-spacing:.12em;text-transform:uppercase;text-align:center}
+.p-timer{font-family:'Cinzel',serif;font-size:2.5rem;font-weight:900;color:var(--gold2);text-align:center;line-height:1}
+.p-timer.urgent{color:var(--red);animation:pulse .5s infinite}
+@keyframes pulse{50%{transform:scale(1.1)}}
+.p-q-text{font-size:1.1rem;font-weight:700;text-align:center;line-height:1.4;padding:0 .5rem}
+.answer-btns{display:grid;grid-template-columns:1fr 1fr;gap:.7rem;width:100%;max-width:420px;padding:.5rem}
+.answer-btn{border:none;border-radius:14px;padding:1.1rem .5rem;font-size:1.1rem;font-weight:900;color:#fff;cursor:pointer;font-family:'Lato',sans-serif;display:flex;flex-direction:column;align-items:center;gap:.4rem;min-height:90px;transition:.15s;active:{transform:scale(.96)}}
+.answer-btn:active{transform:scale(.95)}
+.answer-btn .opt-lbl{font-size:1.5rem;font-weight:900;opacity:.7}
+.answer-btn.btn-A{background:linear-gradient(135deg,#c0392b,#e74c3c)}
+.answer-btn.btn-B{background:linear-gradient(135deg,#2980b9,#3498db)}
+.answer-btn.btn-C{background:linear-gradient(135deg,#b8860b,#d4a017)}
+.answer-btn.btn-D{background:linear-gradient(135deg,#1a7a60,#27ae60)}
+.answer-btn.selected{opacity:.5;transform:scale(.95)}
+.answer-btn.locked{cursor:default}
+
+/* ── PLAYER: WAITING ── */
+#player-waiting{padding:2rem;gap:1rem;background:var(--ocean);text-align:center}
+.waiting-icon{font-size:3rem;animation:spin 2s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.waiting-text{font-size:1rem;color:rgba(255,255,255,.6)}
+
+/* ── PLAYER: SCORE UPDATE ── */
+#player-score{padding:2rem;gap:.8rem;background:var(--ocean);text-align:center}
+.result-icon{font-size:3.5rem}
+.result-text{font-family:'Cinzel',serif;font-size:1.5rem}
+.result-text.correct{color:#2a9d8f}
+.result-text.wrong{color:var(--red)}
+.pts-gained{font-size:2rem;font-weight:900;color:var(--gold2);font-family:'Cinzel',serif}
+.total-score{font-size:1rem;color:rgba(255,255,255,.5)}
+.rank-display{font-size:.9rem;color:rgba(255,255,255,.4)}
+
+/* ── PLAYER: FINAL ── */
+#player-final{padding:2rem;gap:1rem;background:radial-gradient(ellipse at bottom,#1a3a6e,var(--ocean));text-align:center}
+.pf-medal{font-size:4rem}
+.pf-rank{font-family:'Cinzel',serif;font-size:1.8rem;color:var(--gold2)}
+.pf-score{font-size:1.1rem;color:rgba(255,255,255,.7)}
+.pf-verse{font-style:italic;max-width:320px;color:rgba(255,255,255,.6);font-size:.9rem;line-height:1.5;border-left:3px solid var(--gold);padding-left:.8rem;text-align:left;margin:.5rem auto}
+
+/* ── PRINT ── */
+@media print{
+  body{background:#fff!important;color:#000!important;overflow:auto}
+  .screen{display:none!important}
+  #print-summary{display:block!important}
+}
+#print-summary{display:none;padding:2rem;font-family:'Lato',sans-serif;color:#000}
+.ps-header{font-family:'Cinzel',serif;font-size:1.5rem;margin-bottom:.5rem}
+.ps-sub{color:#666;margin-bottom:1.5rem}
+.ps-table{width:100%;border-collapse:collapse;margin-bottom:1.5rem}
+.ps-table th,.ps-table td{border:1px solid #ddd;padding:.4rem .6rem;font-size:.85rem;text-align:left}
+.ps-table th{background:#f5f0e3;font-family:'Cinzel',serif}
+.ps-tick{color:green;font-weight:700}
+.ps-cross{color:red}
+.ps-footer{font-size:.75rem;color:#888;margin-top:1rem;font-style:italic}
+
+/* ── MISC ── */
+h2{font-family:'Cinzel',serif;font-size:1.2rem;color:var(--gold);letter-spacing:.08em;text-align:center}
+.subtitle{color:rgba(255,255,255,.5);font-size:.85rem;text-align:center}
+.error-msg{color:var(--red);font-size:.85rem;text-align:center;max-width:300px}
+</style>
+</head>
+<body>
+
+<!-- SCREENS -->
+<div class="screen active" id="setup">
+  <div class="logo">⚓ The Wayfinder's Sea Trial<small>BOSS BATTLE</small></div>
+  <div class="week-btns">
+    <button class="btn btn-gold" onclick="startHost(5)">🌊 Host — Week 5 Sea Trial<br><small style="font-weight:400;font-size:.75em">Covers Weeks 1–4</small></button>
+    <button class="btn btn-gold" onclick="startHost(10)">🏆 Host — Week 10 Final Exam<br><small style="font-weight:400;font-size:.75em">Covers Weeks 6–9</small></button>
+  </div>
+  <div class="divider">— or —</div>
+  <button class="btn btn-player" onclick="showJoin()">🛶 Join as Student</button>
+  <p class="join-note" style="margin-top:.5rem">Students: scan the QR code on the classroom screen instead</p>
+  <div id="setup-error" class="error-msg"></div>
+  <div style="margin-top:1.5rem;font-size:.72rem;color:rgba(255,255,255,.2);text-align:center;max-width:320px">
+    Tip: this page must be served over HTTP (not opened as a file) for students to join.<br>
+    Run: <code style="background:rgba(255,255,255,.08);padding:.1rem .3rem;border-radius:3px">python3 -m http.server 8080</code> in the wayfinder folder.
+  </div>
+</div>
+
+<div class="screen" id="host-lobby">
+  <h2 id="lobby-week-title">Sea Trial — Week 5</h2>
+  <div class="room-box">
+    <div class="room-label">Room Code</div>
+    <div class="room-code" id="room-code">——</div>
+    <div id="qr-code"></div>
+    <div style="font-size:.72rem;color:rgba(255,255,255,.4);margin-top:.3rem" id="qr-url"></div>
+  </div>
+  <div id="player-list" class="player-list"><span class="waiting-msg">Waiting for crew to join…</span></div>
+  <button class="btn btn-gold host-start-btn" id="start-btn" onclick="startGame()" disabled>⚓ Set Sail! Start Quiz</button>
+  <div class="subtitle" id="lobby-count">0 players joined</div>
+</div>
+
+<div class="screen" id="host-question">
+  <div class="q-header">
+    <div class="q-num" id="q-num">Question 1 / 15</div>
+    <div class="timer-ring">
+      <svg width="72" height="72"><circle cx="36" cy="36" r="30"/><circle class="progress" id="timer-circle" cx="36" cy="36" r="30" stroke-dasharray="188.5" stroke-dashoffset="0"/></svg>
+      <div class="timer-num" id="timer-num">20</div>
+    </div>
+    <div class="q-answered" id="q-answered">0 answered</div>
+  </div>
+  <div class="q-text" id="q-text"></div>
+  <div class="options-grid" id="options-host"></div>
+  <div class="answer-tally" id="answer-tally"></div>
+</div>
+
+<div class="screen" id="host-reveal">
+  <div class="correct-banner">✓ Correct Answer</div>
+  <div class="correct-answer" id="reveal-correct"></div>
+  <div class="options-reveal" id="reveal-options"></div>
+  <div class="mini-scores" id="reveal-scores"></div>
+  <button class="btn btn-gold" id="next-btn" onclick="nextQuestion()" style="margin-top:.5rem">Next Question →</button>
+</div>
+
+<div class="screen" id="host-race">
+  <div class="race-title">⚓ Voyage Standings</div>
+  <div class="race-track" id="race-track">
+    <div class="race-ocean"></div>
+    <div class="race-wave"></div>
+    <div class="race-start"></div>
+    <div class="race-end"><div class="race-end-label">LANDFALL</div></div>
+    <div id="race-rows"></div>
+  </div>
+  <button class="btn btn-gold" onclick="showQuestion()" id="race-next-btn" style="margin-top:.5rem">Continue Voyage →</button>
+</div>
+
+<div class="screen" id="host-final">
+  <div class="final-title">🏝 Voyage Complete!</div>
+  <div class="podium" id="podium"></div>
+  <div class="leaderboard" id="leaderboard"></div>
+  <div style="display:flex;gap:.8rem;margin-top:.5rem;flex-wrap:wrap;justify-content:center">
+    <button class="btn btn-gold print-btn" onclick="printSummary()">🖨 Print Summary</button>
+    <button class="btn btn-outline" onclick="location.reload()">↺ New Game</button>
+  </div>
+</div>
+
+<!-- PLAYER SCREENS -->
+<div class="screen" id="player-join">
+  <div class="join-title">🛶 Join the Crew</div>
+  <div class="join-sub" id="join-room-label">Connecting…</div>
+  <input class="name-input" id="name-input" type="text" placeholder="Your name" maxlength="20" autocomplete="off">
+  <button class="btn btn-gold" onclick="joinGame()" style="font-size:1.1rem;padding:.8rem 2.5rem">Board the Waka!</button>
+  <div class="join-note">Enter your first name only</div>
+  <div id="join-error" class="error-msg"></div>
+</div>
+
+<div class="screen" id="player-lobby">
+  <div style="font-size:3rem">🛶</div>
+  <div class="your-name" id="your-name-display">Tama</div>
+  <div class="lobby-status">You're on the crew!</div>
+  <div class="wave-dots"><span></span><span></span><span></span></div>
+  <div class="lobby-crew" id="lobby-crew-count">Waiting for the captain to start…</div>
+</div>
+
+<div class="screen" id="player-answer">
+  <div class="p-q-num" id="p-q-num">Question 1</div>
+  <div class="p-timer" id="p-timer">20</div>
+  <div class="p-q-text" id="p-q-text"></div>
+  <div class="answer-btns" id="answer-btns"></div>
+  <div style="font-size:.75rem;color:rgba(255,255,255,.3);text-align:center;margin-top:.3rem" id="p-status"></div>
+</div>
+
+<div class="screen" id="player-waiting">
+  <div class="waiting-icon">⏳</div>
+  <div class="waiting-text" id="waiting-msg">Waiting for results…</div>
+</div>
+
+<div class="screen" id="player-score">
+  <div class="result-icon" id="result-icon"></div>
+  <div class="result-text" id="result-text"></div>
+  <div class="pts-gained" id="pts-gained"></div>
+  <div class="total-score" id="total-score"></div>
+  <div class="rank-display" id="rank-display"></div>
+</div>
+
+<div class="screen" id="player-final">
+  <div class="pf-medal" id="pf-medal">🏅</div>
+  <div class="pf-rank" id="pf-rank"></div>
+  <div class="pf-score" id="pf-score"></div>
+  <div class="pf-verse" id="pf-verse"></div>
+</div>
+
+<!-- PRINT -->
+<div id="print-summary"></div>
+
+<script>
+// ════════════════════════════════════════════════════════════════
+// QUESTIONS DATA
+// ════════════════════════════════════════════════════════════════
+const QUESTIONS = {
+  5: [
+    { q:"What civilisation is famous for making distinctive dot-and-line pottery found across the Pacific?", opts:["Māori","Lapita","Hawaiian","Tongan"], correct:1 },
+    { q:"The Polynesian Triangle connects which three island groups?", opts:["Fiji, Samoa & Tonga","Hawaii, New Zealand & Easter Island","Tahiti, Cook Islands & Marquesas","Solomon Islands, Vanuatu & Fiji"], correct:1 },
+    { q:"Which Psalm says 'The heavens declare the glory of God; the skies proclaim the work of his hands'?", opts:["Psalm 23","Psalm 100","Psalm 19","Psalm 150"], correct:2 },
+    { q:"What design feature made the waka hourua uniquely capable of ocean crossings?", opts:["It was made of metal","It had a motor","It had a double hull","It had three sails"], correct:2 },
+    { q:"Hebrews 11:8 describes which person leaving without knowing where he was going?", opts:["Moses","David","Abraham","Noah"], correct:2 },
+    { q:"What did Pacific wayfinders call the invisible 'roads in the sea'?", opts:["Wind patterns","Ocean currents","Star paths","Bird migration routes"], correct:1 },
+    { q:"In John 3:8, Jesus compared the Holy Spirit to what natural force?", opts:["Fire","Rain","Earthquake","Wind"], correct:3 },
+    { q:"What is the name of the nine Māori stars used as a seasonal calendar?", opts:["Te Punga","Matariki","Māui's Fishhook","The Southern Cross"], correct:1 },
+    { q:"Which cloud type tells a voyager that a serious storm is approaching?", opts:["Cirrus","Cumulus","Cumulonimbus","Stratus"], correct:2 },
+    { q:"Isaiah 40:31 says those who hope in the Lord will soar on wings like what?", opts:["Dolphins","Albatross","Eagles","Frigate birds"], correct:2 },
+    { q:"The outrigger float (ama) on a waka was designed primarily to do what?", opts:["Store food","Provide balance and stability","Catch fish","Hold the sail upright"], correct:1 },
+    { q:"Which school value connects BEST to learning the history of where we come from?", opts:["Aroha — Love","Mōhio — Know","Manaaki — Serve","Pānga — Impact"], correct:1 },
+    { q:"What material was the traditional Polynesian voyaging sail made from?", opts:["Cotton cloth","Animal hide","Woven pandanus leaves","Bark cloth"], correct:2 },
+    { q:"Colossians 1:17 says 'in him all things…'", opts:["…find their purpose","…hold together","…are created","…shall be revealed"], correct:1 },
+    { q:"What does 'Soli Deo Gloria' mean?", opts:["God loves the sea","To God alone the glory","We sail for God","The voyage of faith"], correct:1 },
+  ],
+  10: [
+    { q:"Which verse describes God 'bringing us to this place and giving us this land'?", opts:["Psalm 23:1","Deuteronomy 26:9","John 3:16","Acts 17:26"], correct:1 },
+    { q:"What traditional Māori woven tool was adapted from Pacific fishing knowledge to catch river eels?", opts:["Hei matau","Patu","Hīnaki","Mere"], correct:2 },
+    { q:"The Tongan tapa cloth tradition of printed bark cloth is called:", opts:["Kapa","Ngatu","Kōwhaiwhai","Siapo"], correct:1 },
+    { q:"Which verse says 'One generation commends your works to another; they tell of your mighty acts'?", opts:["Deuteronomy 6:7","Psalm 145:4","Acts 17:26","Revelation 7:9"], correct:1 },
+    { q:"The kōwhaiwhai pattern used in Māori art includes which primary shapes?", opts:["Squares and triangles","Spirals and scrolls","Stars and diamonds","Circles and straight lines"], correct:1 },
+    { q:"Revelation 7:9 describes a great multitude from:", opts:["Israel alone","The Pacific Islands","One nation and language","Every nation, tribe, people and language"], correct:3 },
+    { q:"Which school value BEST connects to caring for the Pacific Ocean?", opts:["Aroha — Love","Mōhio — Know","Manaaki — Serve","Pānga — Impact"], correct:3 },
+    { q:"The modern waka hourua added what technology alongside traditional carved design?", opts:["GPS radar","Solar panels","A diesel motor","A steel hull"], correct:1 },
+    { q:"Mark 4:39 records Jesus rebuking what?", opts:["A crowd of thousands","A mountain","A storm — the wind and waves","The Pharisees"], correct:2 },
+    { q:"Which verse commands us to 'work and take care of' the garden (creation)?", opts:["Genesis 2:15","Genesis 1:1","Psalm 24:1","Deuteronomy 8:10"], correct:0 },
+    { q:"Paul describes us as God's 'handiwork, created in Christ Jesus to do good works' in:", opts:["Romans 8","Galatians 3","Ephesians 2:10","Colossians 1"], correct:2 },
+    { q:"The Hawaiian traditional bark cloth tradition (similar to Tongan ngatu) is called:", opts:["Tapa","Siapo","Kapa","Aloha"], correct:2 },
+    { q:"Romans 8:22 says 'the whole creation has been groaning as in the pains of…'", opts:["A storm","Childbirth","A long voyage","Hunger"], correct:1 },
+    { q:"What does 'Soli Deo Gloria' mean?", opts:["God loves the sea","To God alone the glory","We sail for God","The voyage of faith"], correct:1 },
+    { q:"Revelation 21:5 records God saying:", opts:['"I am making everything new!"','"It is finished."','"Come and see."','"Well done, good servant."'], correct:0 },
+  ],
+};
+
+const CLOSING_VERSES = {
+  5: { text:"Those who hope in the LORD will renew their strength. They will soar on wings like eagles.", ref:"Isaiah 40:31" },
+  10: { text:"He who was seated on the throne said, 'I am making everything new!'", ref:"Revelation 21:5" },
+};
+
+const BOAT_EMOJIS = ['🛶','⛵','🚤','🛥️','⛴️','🚢','🛳️','🏄','🤿','🐠'];
+const TIME_LIMIT = 20;
+const MAX_PTS = 1000;
+const SPEED_BONUS = 500;
+
+// ════════════════════════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════════════════════════
+let mode = null; // 'host' | 'player'
+let peer = null;
+let hostConn = null; // player's connection to host
+let playerConns = {}; // host's connections to players: peerId → conn
+let players = {}; // peerId → { name, score, answers:[], boat }
+let myPeerId = null;
+let myName = null;
+let myScore = 0;
+let myAnswers = [];
+let currentWeek = 5;
+let currentQ = -1;
+let qStartTime = 0;
+let timerInterval = null;
+let timeLeft = TIME_LIMIT;
+let myAnswer = null;
+let gameQuestions = [];
+let totalQuestions = 0;
+
+// ════════════════════════════════════════════════════════════════
+// SCREEN MANAGEMENT
+// ════════════════════════════════════════════════════════════════
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ════════════════════════════════════════════════════════════════
+// HOST SETUP
+// ════════════════════════════════════════════════════════════════
+function startHost(week) {
+  mode = 'host';
+  currentWeek = week;
+  gameQuestions = QUESTIONS[week];
+  totalQuestions = gameQuestions.length;
+
+  document.getElementById('lobby-week-title').textContent =
+    week === 5 ? '🌊 Sea Trial — Boss Battle Week 5' : '🏆 Wayfinder\'s Examination — Week 10';
+
+  peer = new Peer({ debug: 0 });
+
+  peer.on('open', id => {
+    myPeerId = id;
+    const shortCode = id.slice(-6).toUpperCase();
+    document.getElementById('room-code').textContent = shortCode;
+
+    // Build player URL
+    const base = window.location.href.split('?')[0];
+    const playerUrl = `${base}?room=${id}`;
+    document.getElementById('qr-url').textContent = playerUrl;
+
+    // Generate QR
+    new QRCode(document.getElementById('qr-code'), {
+      text: playerUrl, width: 160, height: 160,
+      colorDark: '#000', colorLight: '#fff',
+      correctLevel: QRCode.CorrectLevel.M,
+    });
+  });
+
+  peer.on('connection', conn => {
+    conn.on('open', () => {
+      conn.on('data', data => handlePlayerMessage(conn, data));
+      conn.on('close', () => {
+        delete playerConns[conn.peer];
+        delete players[conn.peer];
+        updateLobbyDisplay();
+      });
+    });
+  });
+
+  peer.on('error', e => {
+    document.getElementById('setup-error').textContent = 'Connection error: ' + e.message;
+  });
+
+  show('host-lobby');
+}
+
+function handlePlayerMessage(conn, data) {
+  if (data.type === 'join') {
+    playerConns[conn.peer] = conn;
+    players[conn.peer] = {
+      name: data.name,
+      score: 0,
+      answers: [],
+      boat: BOAT_EMOJIS[Object.keys(players).length % BOAT_EMOJIS.length],
+    };
+    updateLobbyDisplay();
+    // Tell this player their ID and that they're in
+    conn.send({ type: 'joined', yourPeerId: conn.peer, playerList: getPlayerList() });
+    // Tell all others about new player
+    broadcast({ type: 'playerList', players: getPlayerList() });
+  } else if (data.type === 'answer') {
+    if (players[conn.peer] && data.questionIndex === currentQ) {
+      const elapsed = (Date.now() - qStartTime) / 1000;
+      const timeFraction = Math.max(0, Math.min(1, 1 - elapsed / TIME_LIMIT));
+      const q = gameQuestions[currentQ];
+      const correct = data.answer === q.correct;
+      const pts = correct ? Math.round(MAX_PTS + SPEED_BONUS * timeFraction) : 0;
+      players[conn.peer].score += pts;
+      players[conn.peer].answers.push({ answer: data.answer, correct, pts, elapsed });
+      conn.send({ type: 'answerAck', correct, pts, totalScore: players[conn.peer].score });
+      updateAnswerTally();
+    }
+  }
+}
+
+function getPlayerList() {
+  return Object.entries(players).map(([id, p]) => ({ id, name: p.name, score: p.score, boat: p.boat }));
+}
+
+function broadcast(data) {
+  Object.values(playerConns).forEach(c => { try { c.send(data); } catch(e){} });
+}
+
+function updateLobbyDisplay() {
+  const count = Object.keys(players).length;
+  document.getElementById('lobby-count').textContent = `${count} player${count !== 1 ? 's' : ''} joined`;
+  const list = document.getElementById('player-list');
+  if (count === 0) {
+    list.innerHTML = '<span class="waiting-msg">Waiting for crew to join…</span>';
+    document.getElementById('start-btn').disabled = true;
+  } else {
+    list.innerHTML = Object.values(players).map(p =>
+      `<div class="player-chip"><span class="boat">${p.boat}</span>${p.name}</div>`
+    ).join('');
+    document.getElementById('start-btn').disabled = false;
+  }
+}
+
+function startGame() {
+  broadcast({ type: 'gameStart', totalQuestions });
+  currentQ = -1;
+  showQuestion();
+}
+
+// ════════════════════════════════════════════════════════════════
+// HOST: QUESTION FLOW
+// ════════════════════════════════════════════════════════════════
+function showQuestion() {
+  currentQ++;
+  if (currentQ >= totalQuestions) { showFinal(); return; }
+
+  const q = gameQuestions[currentQ];
+  qStartTime = Date.now();
+  timeLeft = TIME_LIMIT;
+
+  // Reset player answers for this question
+  Object.values(players).forEach(p => {
+    // answers array tracks all Qs
+  });
+
+  // Update host UI
+  document.getElementById('q-num').textContent = `Question ${currentQ + 1} / ${totalQuestions}`;
+  document.getElementById('q-text').textContent = q.q;
+  document.getElementById('q-answered').textContent = '0 answered';
+
+  const colours = ['opt-A','opt-B','opt-C','opt-D'];
+  const letters = ['A','B','C','D'];
+  document.getElementById('options-host').innerHTML = q.opts.map((opt, i) =>
+    `<div class="option-host ${colours[i]}"><span class="opt-letter">${letters[i]}</span>${opt}</div>`
+  ).join('');
+
+  // Broadcast question to players
+  broadcast({ type: 'question', index: currentQ, q: q.q, opts: q.opts, timeLimit: TIME_LIMIT });
+
+  show('host-question');
+  startTimer();
+}
+
+function startTimer() {
+  clearInterval(timerInterval);
+  const circle = document.getElementById('timer-circle');
+  const circumference = 188.5;
+
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    document.getElementById('timer-num').textContent = timeLeft;
+    circle.style.strokeDashoffset = circumference * (1 - timeLeft / TIME_LIMIT);
+    if (timeLeft <= 5) {
+      document.getElementById('timer-num').style.color = '#e63946';
+      circle.style.stroke = '#e63946';
+    }
+    if (timeLeft <= 0) {
+      clearInterval(timerInterval);
+      broadcast({ type: 'timeUp' });
+      setTimeout(showReveal, 800);
+    }
+  }, 1000);
+}
+
+function updateAnswerTally() {
+  const answered = Object.values(players).filter(p => p.answers.length === currentQ + 1).length;
+  const total = Object.keys(players).length;
+  document.getElementById('q-answered').textContent = `${answered} / ${total} answered`;
+  if (answered === total && total > 0) {
+    clearInterval(timerInterval);
+    setTimeout(showReveal, 800);
+  }
+}
+
+function showReveal() {
+  clearInterval(timerInterval);
+  const q = gameQuestions[currentQ];
+  const colours = ['opt-A','opt-B','opt-C','opt-D'];
+  const letters = ['A','B','C','D'];
+
+  document.getElementById('reveal-correct').textContent = `${letters[q.correct]}: ${q.opts[q.correct]}`;
+  document.getElementById('reveal-options').innerHTML = q.opts.map((opt, i) =>
+    `<div class="option-host option-reveal ${colours[i]} ${i === q.correct ? 'correct-opt' : ''}">
+      <span class="opt-letter">${letters[i]}</span>${opt}
+    </div>`
+  ).join('');
+
+  // Mini scores
+  const sorted = Object.entries(players).sort((a,b) => b[1].score - a[1].score);
+  document.getElementById('reveal-scores').innerHTML = sorted.map(([id, p]) => {
+    const lastAns = p.answers[p.answers.length - 1];
+    const delta = lastAns ? lastAns.pts : 0;
+    return `<div class="score-chip">
+      <div class="sc-name">${p.boat} ${p.name}</div>
+      <div class="sc-pts">${p.score.toLocaleString()}</div>
+      ${delta > 0 ? `<div class="sc-delta">+${delta}</div>` : ''}
+    </div>`;
+  }).join('');
+
+  const isLast = currentQ >= totalQuestions - 1;
+  document.getElementById('next-btn').textContent = isLast ? '🏝 See Final Results' : 'Next Question →';
+
+  broadcast({ type: 'reveal', correct: q.correct, scores: Object.fromEntries(
+    Object.entries(players).map(([id,p]) => [id, { score: p.score, lastPts: p.answers[p.answers.length-1]?.pts ?? 0 }])
+  )});
+
+  show('host-reveal');
+}
+
+function nextQuestion() {
+  // Show race after every 3 questions or on last
+  if ((currentQ + 1) % 3 === 0 || currentQ >= totalQuestions - 1) {
+    showRace();
+  } else {
+    showQuestion();
+  }
+}
+
+function showRace() {
+  const sorted = Object.entries(players).sort((a,b) => b[1].score - a[1].score);
+  const maxScore = sorted.length > 0 ? Math.max(...sorted.map(([,p]) => p.score)) : 1;
+  const maxPossible = (currentQ + 1) * (MAX_PTS + SPEED_BONUS);
+  const trackWidth = document.getElementById('race-track').clientWidth - 120; // subtract start/end margins
+
+  const rowsEl = document.getElementById('race-rows');
+  if (rowsEl.children.length === 0) {
+    // Build rows once
+    rowsEl.innerHTML = sorted.map(([id, p], i) =>
+      `<div class="race-row" id="rr-${id}">
+        <div class="race-name">${p.boat} ${p.name}</div>
+        <div class="race-boat" id="rb-${id}" style="left:64px">${p.boat}</div>
+        <div class="race-score" id="rs-${id}">${p.score.toLocaleString()}</div>
+      </div>`
+    ).join('');
+  }
+
+  // Update positions
+  sorted.forEach(([id, p]) => {
+    const fraction = maxPossible > 0 ? Math.min(1, p.score / maxPossible) : 0;
+    const leftPx = 64 + fraction * (trackWidth - 30);
+    const boatEl = document.getElementById(`rb-${id}`);
+    const scoreEl = document.getElementById(`rs-${id}`);
+    if (boatEl) boatEl.style.left = leftPx + 'px';
+    if (scoreEl) scoreEl.textContent = p.score.toLocaleString();
+  });
+
+  broadcast({ type: 'race', scores: Object.fromEntries(Object.entries(players).map(([id,p]) => [id,p.score])) });
+
+  const isLast = currentQ >= totalQuestions - 1;
+  document.getElementById('race-next-btn').textContent = isLast ? '🏝 Final Results' : 'Next Question →';
+  document.getElementById('race-next-btn').onclick = isLast ? showFinal : showQuestion;
+
+  show('host-race');
+}
+
+function showFinal() {
+  const sorted = Object.entries(players).sort((a,b) => b[1].score - a[1].score);
+
+  // Podium
+  const medals = ['🥇','🥈','🥉'];
+  const heights = ['podium-1','podium-2','podium-3'];
+  const podiumOrder = [1, 0, 2]; // second, first, third
+  const podiumEl = document.getElementById('podium');
+  podiumEl.innerHTML = podiumOrder.map(i => {
+    const entry = sorted[i];
+    if (!entry) return '';
+    const [id, p] = entry;
+    return `<div class="podium-step ${heights[i]}">
+      <div class="medal">${medals[i]}</div>
+      <div class="p-name">${p.boat} ${p.name}</div>
+      <div class="p-score">${p.score.toLocaleString()}</div>
+      <div class="p-block"></div>
+    </div>`;
+  }).join('');
+
+  // Full leaderboard
+  document.getElementById('leaderboard').innerHTML =
+    `<div class="lb-row" style="font-weight:700;background:rgba(200,146,42,.1)"><span>#</span><span>Crew Member</span><span>Score</span></div>` +
+    sorted.map(([id,p], i) =>
+      `<div class="lb-row"><span class="lb-rank">${i+1}</span><span>${p.boat} ${p.name}</span><span class="lb-score">${p.score.toLocaleString()}</span></div>`
+    ).join('');
+
+  broadcast({ type: 'final', rank: Object.fromEntries(sorted.map(([id],i) => [id, i+1])), scores: Object.fromEntries(Object.entries(players).map(([id,p]) => [id,p.score])) });
+
+  show('host-final');
+}
+
+// ════════════════════════════════════════════════════════════════
+// PRINT SUMMARY
+// ════════════════════════════════════════════════════════════════
+function printSummary() {
+  const sorted = Object.entries(players).sort((a,b) => b[1].score - a[1].score);
+  const qs = gameQuestions;
+  const letters = ['A','B','C','D'];
+  const weekTitle = currentWeek === 5 ? 'Week 5 Sea Trial' : 'Week 10 Wayfinder\'s Examination';
+
+  let html = `<div class="ps-header">⚓ ${weekTitle} — Results Summary</div>
+<div class="ps-sub">The Wayfinder's Journal · Soli Deo Gloria</div>
+<table class="ps-table">
+<tr><th>Rank</th><th>Name</th><th>Score</th>${qs.map((_,i) => `<th>Q${i+1}</th>`).join('')}</tr>`;
+
+  sorted.forEach(([id, p], rank) => {
+    html += `<tr><td>${rank+1}</td><td>${p.boat} ${p.name}</td><td><strong>${p.score.toLocaleString()}</strong></td>`;
+    p.answers.forEach(a => {
+      html += `<td class="${a.correct ? 'ps-tick' : 'ps-cross'}">${a.correct ? '✓' : '✗'}</td>`;
+    });
+    // Pad if they didn't answer all
+    for (let i = p.answers.length; i < qs.length; i++) html += '<td>—</td>';
+    html += '</tr>';
+  });
+
+  html += `</table>
+<table class="ps-table">
+<tr><th>#</th><th>Question</th><th>Correct Answer</th></tr>`;
+  qs.forEach((q, i) => {
+    html += `<tr><td>${i+1}</td><td>${q.q}</td><td>${letters[q.correct]}: ${q.opts[q.correct]}</td></tr>`;
+  });
+
+  html += `</table><div class="ps-footer">Printed from The Wayfinder's Journal boss battle. Total questions: ${qs.length} · Max possible score: ${qs.length * (MAX_PTS + SPEED_BONUS).toLocaleString()}</div>`;
+
+  document.getElementById('print-summary').innerHTML = html;
+  window.print();
+}
+
+// ════════════════════════════════════════════════════════════════
+// PLAYER SETUP
+// ════════════════════════════════════════════════════════════════
+function showJoin() {
+  const params = new URLSearchParams(window.location.search);
+  const roomId = params.get('room');
+  if (roomId) {
+    document.getElementById('join-room-label').textContent = `Joining room…`;
+    connectToHost(roomId);
+  } else {
+    document.getElementById('join-room-label').textContent = 'Enter the room code shown on the board, or ask your teacher to scan the QR code instead';
+  }
+  show('player-join');
+}
+
+function connectToHost(roomId) {
+  peer = new Peer({ debug: 0 });
+  peer.on('open', id => {
+    myPeerId = id;
+    hostConn = peer.connect(roomId);
+    hostConn.on('open', () => {
+      document.getElementById('join-room-label').textContent = 'Connected! Enter your name 👇';
+    });
+    hostConn.on('data', data => handleHostMessage(data));
+    hostConn.on('close', () => {
+      alert('Connection to host lost. The game may have ended.');
+    });
+  });
+  peer.on('error', e => {
+    document.getElementById('join-error').textContent = 'Could not connect. Check the room code.';
+  });
+}
+
+function joinGame() {
+  myName = document.getElementById('name-input').value.trim();
+  if (!myName) { document.getElementById('join-error').textContent = 'Please enter your name!'; return; }
+  if (!hostConn) {
+    const params = new URLSearchParams(window.location.search);
+    const roomId = params.get('room');
+    if (!roomId) { document.getElementById('join-error').textContent = 'No room found. Ask your teacher!'; return; }
+    connectToHost(roomId);
+    setTimeout(() => {
+      if (hostConn && hostConn.open) {
+        hostConn.send({ type: 'join', name: myName });
+      }
+    }, 1500);
+    return;
+  }
+  hostConn.send({ type: 'join', name: myName });
+}
+
+function handleHostMessage(data) {
+  if (data.type === 'joined') {
+    myPeerId = data.yourPeerId || myPeerId;
+    document.getElementById('your-name-display').textContent = '🛶 ' + myName;
+    updateCrewCount(data.playerList);
+    show('player-lobby');
+  } else if (data.type === 'playerList') {
+    updateCrewCount(data.players);
+  } else if (data.type === 'gameStart') {
+    totalQuestions = data.totalQuestions;
+    show('player-lobby');
+  } else if (data.type === 'question') {
+    myAnswer = null;
+    currentQ = data.index;
+    showPlayerQuestion(data);
+  } else if (data.type === 'timeUp') {
+    if (myAnswer === null) {
+      show('player-waiting');
+      document.getElementById('waiting-msg').textContent = "Time's up! Waiting for results…";
+    }
+  } else if (data.type === 'answerAck') {
+    showPlayerScore(data.correct, data.pts, data.totalScore);
+  } else if (data.type === 'reveal') {
+    myScore = data.scores[myPeerId]?.score ?? myScore;
+    // Already showing score update, or show waiting
+    if (document.getElementById('player-answer').classList.contains('active')) {
+      show('player-waiting');
+    }
+  } else if (data.type === 'race') {
+    myScore = data.scores[myPeerId] ?? myScore;
+    document.getElementById('total-score').textContent = 'Total score: ' + myScore.toLocaleString();
+    show('player-score');
+  } else if (data.type === 'final') {
+    const rank = data.rank[myPeerId] ?? '?';
+    const score = data.scores[myPeerId] ?? myScore;
+    showPlayerFinal(rank, score);
+  }
+}
+
+function updateCrewCount(playerList) {
+  const count = playerList ? playerList.length : 0;
+  document.getElementById('lobby-crew-count').textContent =
+    `${count} crew member${count !== 1 ? 's' : ''} aboard · Waiting for the captain…`;
+}
+
+// ════════════════════════════════════════════════════════════════
+// PLAYER: QUESTION UI
+// ════════════════════════════════════════════════════════════════
+function showPlayerQuestion(data) {
+  document.getElementById('p-q-num').textContent = `Question ${data.index + 1} of ${totalQuestions}`;
+  document.getElementById('p-q-text').textContent = data.q;
+
+  const letters = ['A','B','C','D'];
+  const clss = ['btn-A','btn-B','btn-C','btn-D'];
+  document.getElementById('answer-btns').innerHTML = data.opts.map((opt, i) =>
+    `<button class="answer-btn ${clss[i]}" onclick="submitAnswer(${i})">
+      <span class="opt-lbl">${letters[i]}</span>${opt}
+    </button>`
+  ).join('');
+
+  document.getElementById('p-status').textContent = '';
+  show('player-answer');
+
+  // Client-side timer (display only, host controls truth)
+  let t = data.timeLimit;
+  const timerEl = document.getElementById('p-timer');
+  clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    t--;
+    timerEl.textContent = t;
+    if (t <= 5) timerEl.classList.add('urgent');
+    else timerEl.classList.remove('urgent');
+    if (t <= 0) clearInterval(timerInterval);
+  }, 1000);
+  timerEl.textContent = data.timeLimit;
+  timerEl.classList.remove('urgent');
+}
+
+function submitAnswer(index) {
+  if (myAnswer !== null) return;
+  myAnswer = index;
+  clearInterval(timerInterval);
+
+  // Grey out other buttons
+  document.querySelectorAll('.answer-btn').forEach((btn, i) => {
+    btn.classList.add(i === index ? 'selected' : 'locked');
+    btn.disabled = true;
+  });
+  document.getElementById('p-status').textContent = '✓ Answer locked in!';
+
+  hostConn.send({ type: 'answer', questionIndex: currentQ, answer: index });
+  // Show waiting after short delay
+  setTimeout(() => {
+    if (document.getElementById('player-answer').classList.contains('active')) {
+      show('player-waiting');
+      document.getElementById('waiting-msg').textContent = 'Answer submitted! Waiting for others…';
+    }
+  }, 1200);
+}
+
+function showPlayerScore(correct, pts, total) {
+  document.getElementById('result-icon').textContent = correct ? '🎉' : '😔';
+  const resultEl = document.getElementById('result-text');
+  resultEl.textContent = correct ? 'Correct!' : 'Not quite…';
+  resultEl.className = 'result-text ' + (correct ? 'correct' : 'wrong');
+  document.getElementById('pts-gained').textContent = correct ? `+${pts.toLocaleString()} pts` : '0 pts';
+  document.getElementById('total-score').textContent = `Total: ${total.toLocaleString()} pts`;
+  document.getElementById('rank-display').textContent = '';
+  myScore = total;
+  show('player-score');
+}
+
+function showPlayerFinal(rank, score) {
+  const medals = ['🥇','🥈','🥉'];
+  const medal = rank <= 3 ? medals[rank - 1] : '🏅';
+  const rankText = rank === 1 ? '1st Place — Wayfinder!' : rank === 2 ? '2nd Place' : rank === 3 ? '3rd Place' : `${rank}th Place`;
+  document.getElementById('pf-medal').textContent = medal;
+  document.getElementById('pf-rank').textContent = rankText;
+  document.getElementById('pf-score').textContent = `Final score: ${score.toLocaleString()} points`;
+  const v = CLOSING_VERSES[currentWeek];
+  document.getElementById('pf-verse').innerHTML = `"${v.text}" — ${v.ref}`;
+  show('player-final');
+}
+
+// ════════════════════════════════════════════════════════════════
+// AUTO-JOIN if URL has ?room=
+// ════════════════════════════════════════════════════════════════
+window.addEventListener('DOMContentLoaded', () => {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('room')) {
+    mode = 'player';
+    showJoin();
+  }
+});
+</script>
+</body>
+</html>
