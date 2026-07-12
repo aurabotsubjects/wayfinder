@@ -615,39 +615,41 @@ function nextQuestion() {
 
 function showRace() {
   const sorted = Object.entries(players).sort((a,b) => b[1].score - a[1].score);
-  const maxScore = sorted.length > 0 ? Math.max(...sorted.map(([,p]) => p.score)) : 1;
   const maxPossible = (currentQ + 1) * (MAX_PTS + SPEED_BONUS);
-  const trackWidth = document.getElementById('race-track').clientWidth - 120; // subtract start/end margins
 
   const rowsEl = document.getElementById('race-rows');
-  if (rowsEl.children.length === 0) {
-    // Build rows once
-    rowsEl.innerHTML = sorted.map(([id, p], i) =>
-      `<div class="race-row" id="rr-${id}">
-        <div class="race-name">${p.boat} ${p.name}</div>
-        <div class="race-boat" id="rb-${id}" style="left:64px">${p.boat}</div>
-        <div class="race-score" id="rs-${id}">${p.score.toLocaleString()}</div>
-      </div>`
-    ).join('');
-  }
+  // Rebuild rows every time so order stays correct
+  rowsEl.innerHTML = sorted.map(([id, p]) =>
+    `<div class="race-row" id="rr-${id}">
+      <div class="race-name">${p.boat} ${p.name}</div>
+      <div class="race-boat" id="rb-${id}" style="left:64px">${p.boat}</div>
+      <div class="race-score" id="rs-${id}">${p.score.toLocaleString()}</div>
+    </div>`
+  ).join('');
 
-  // Update positions
-  sorted.forEach(([id, p]) => {
-    const fraction = maxPossible > 0 ? Math.min(1, p.score / maxPossible) : 0;
-    const leftPx = 64 + fraction * (trackWidth - 30);
-    const boatEl = document.getElementById(`rb-${id}`);
-    const scoreEl = document.getElementById(`rs-${id}`);
-    if (boatEl) boatEl.style.left = leftPx + 'px';
-    if (scoreEl) scoreEl.textContent = p.score.toLocaleString();
-  });
+  // Show screen FIRST so clientWidth is valid
+  show('host-race');
+
+  // Then update positions in next frame so CSS transition fires
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    const trackEl = document.getElementById('race-track');
+    const trackWidth = trackEl.clientWidth - 120;
+
+    sorted.forEach(([id, p]) => {
+      const fraction = maxPossible > 0 ? Math.min(1, p.score / maxPossible) : 0;
+      const leftPx = 64 + fraction * Math.max(0, trackWidth - 30);
+      const boatEl = document.getElementById(`rb-${id}`);
+      const scoreEl = document.getElementById(`rs-${id}`);
+      if (boatEl) boatEl.style.left = leftPx + 'px';
+      if (scoreEl) scoreEl.textContent = p.score.toLocaleString();
+    });
+  }));
 
   broadcast({ type: 'race', scores: Object.fromEntries(Object.entries(players).map(([id,p]) => [id,p.score])) });
 
   const isLast = currentQ >= totalQuestions - 1;
   document.getElementById('race-next-btn').textContent = isLast ? '🏝 Final Results' : 'Next Question →';
   document.getElementById('race-next-btn').onclick = isLast ? showFinal : showQuestion;
-
-  show('host-race');
 }
 
 function showFinal() {
