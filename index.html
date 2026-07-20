@@ -90,6 +90,14 @@ select{
 .begin-cta{margin-top:1.4rem;background:linear-gradient(135deg,var(--gold),#c4914f);color:#1c1306;border:none;
   padding:.8rem 1.8rem;border-radius:12px;font-weight:700;font-size:1rem;cursor:pointer;font-family:'Cinzel',serif;
   box-shadow:0 6px 20px rgba(217,168,92,.3)}
+.print-all-btn{margin-top:1.4rem;background:transparent;color:var(--teal);border:1px solid var(--teal);
+  padding:.8rem 1.6rem;border-radius:12px;font-weight:700;font-size:.92rem;cursor:pointer;font-family:'Outfit'}
+.print-all-btn:hover{background:rgba(46,196,182,.1)}
+.lp-week-tag{
+  display:inline-block;background:var(--gold-soft);border:1px solid var(--gold);color:var(--gold);
+  font-family:'Cinzel',serif;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;
+  padding:.25rem .7rem;border-radius:999px;margin-bottom:.8rem
+}
 
 /* ── Trial header ───────────────────────────────────── */
 .trial-meta{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;margin-bottom:.5rem}
@@ -231,6 +239,69 @@ select{
 .lp-agency-card h5{margin:0 0 .4rem;font-size:.82rem;color:var(--gold);font-family:'Cinzel',serif}
 .lp-agency-card p{font-size:.82rem;color:var(--ink-muted);margin:.2rem 0}
 .lp-print-note{font-size:.76rem;color:var(--ink-faint);text-align:center;margin-top:1.5rem}
+.modal-print-btn{
+  position:absolute;top:1rem;right:4.2rem;background:linear-gradient(135deg,var(--gold),#c4914f);
+  color:#1c1306;border:none;padding:.5rem 1rem;border-radius:999px;cursor:pointer;
+  font-size:.8rem;font-weight:700;font-family:'Outfit';display:flex;align-items:center;gap:.4rem
+}
+
+/* ── Printing a single lesson plan cleanly ───────────── */
+@media print{
+  body.printing-lesson-plan > *:not(.modal-overlay){display:none !important}
+  body.printing-lesson-plan{background:#fff !important}
+  body.printing-lesson-plan .modal-overlay{
+    position:static !important;display:block !important;background:none !important;
+    padding:0 !important;overflow:visible !important;inset:auto !important;height:auto !important
+  }
+  body.printing-lesson-plan .modal-box{
+    box-shadow:none !important;border:none !important;max-width:100% !important;
+    width:100% !important;padding:0 !important;background:#fff !important;
+    position:static !important;margin:0 !important
+  }
+  body.printing-lesson-plan .modal-close,
+  body.printing-lesson-plan .modal-print-btn,
+  body.printing-lesson-plan .lp-print-note{display:none !important}
+  body.printing-lesson-plan #lesson-plan-content{color:#111 !important}
+  body.printing-lesson-plan .lp-title{color:#8a5e1a !important}
+  body.printing-lesson-plan .lp-sub{color:#444 !important}
+  body.printing-lesson-plan .lp-meta-item{
+    background:#f5f2ea !important;border:1px solid #ccc !important;
+    -webkit-print-color-adjust:exact;print-color-adjust:exact
+  }
+  body.printing-lesson-plan .lp-meta-item .k{color:#666 !important}
+  body.printing-lesson-plan .lp-meta-item .v{color:#111 !important}
+  body.printing-lesson-plan .lp-section h4{color:#0d6b63 !important;border-bottom:1px solid #ccc !important}
+  body.printing-lesson-plan .lp-section li,
+  body.printing-lesson-plan .lp-section p{color:#111 !important}
+  body.printing-lesson-plan .lp-subblock{
+    background:#f5f2ea !important;border-left:3px solid #0d6b63 !important;
+    -webkit-print-color-adjust:exact;print-color-adjust:exact
+  }
+  body.printing-lesson-plan .lp-subblock strong{color:#8a5e1a !important}
+  body.printing-lesson-plan .lp-agency-card{
+    background:#f5f2ea !important;border:1px solid #ccc !important;
+    -webkit-print-color-adjust:exact;print-color-adjust:exact
+  }
+  body.printing-lesson-plan .lp-agency-card h5{color:#8a5e1a !important}
+  body.printing-lesson-plan .lp-agency-card p{color:#333 !important}
+  body.printing-lesson-plan .lp-faith,
+  body.printing-lesson-plan .lp-faith-verse{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  body.printing-lesson-plan .lp-section,
+  body.printing-lesson-plan .lp-subblock,
+  body.printing-lesson-plan .lp-agency-card,
+  body.printing-lesson-plan .lp-faith{page-break-inside:avoid;break-inside:avoid}
+  body.printing-lesson-plan .lp-meta-grid,
+  body.printing-lesson-plan .lp-agency-grid{display:block !important}
+  body.printing-lesson-plan .lp-meta-item,
+  body.printing-lesson-plan .lp-agency-card{margin-bottom:.6rem}
+  body.printing-all-plans .lp-print-page{page-break-after:always;break-after:page}
+  body.printing-all-plans .lp-print-page:last-child{page-break-after:auto;break-after:auto}
+  body.printing-lesson-plan .lp-week-tag{
+    background:#f5f2ea !important;border:1px solid #c8922a !important;color:#8a5e1a !important;
+    -webkit-print-color-adjust:exact;print-color-adjust:exact
+  }
+  @page{margin:1.5cm}
+}
 
 /* ── Error banner (missing data files) ───────────────── */
 .data-error-banner{
@@ -243,6 +314,8 @@ select{
   .selector-bar{flex-direction:column;align-items:stretch}
   select{min-width:0;width:100%}
   .go-btn{align-self:stretch}
+  .modal-print-btn{top:.7rem;right:auto;left:1rem;padding:.45rem .85rem;font-size:.74rem}
+  .modal-box{padding-top:3.2rem}
 }
 
 /* ── Per-day trial square image ──────────────────────── */
@@ -470,7 +543,10 @@ select{
       <div class="day-legend-item"><div class="dot-label"><div class="dot" style="background:var(--thu)"></div><span class="day-name">Thursday</span></div><div class="day-strand">Technology — The Workshop</div><div class="day-quest">Build it. Test it.</div></div>
       <div class="day-legend-item"><div class="dot-label"><div class="dot" style="background:var(--fri)"></div><span class="day-name">Friday</span></div><div class="day-strand">Art — The Atelier</div><div class="day-quest">Add to the voyage mural.</div></div>
     </div>
-    <button class="begin-cta" onclick="loadTrial()">Open the Journal →</button>
+    <div style="display:flex;gap:.7rem;justify-content:center;flex-wrap:wrap;margin-top:1.4rem">
+      <button class="begin-cta" onclick="loadTrial()">Open the Journal →</button>
+      <button class="print-all-btn" onclick="printAllLessonPlans()">🖨️ Print All Lesson Plans</button>
+    </div>
   </div>
   <div id="trial-area" style="display:none"></div>
 </main>
@@ -479,6 +555,7 @@ select{
 
 <div class="modal-overlay" id="lesson-plan-overlay" onclick="if(event.target===this) closeLessonPlan()">
   <div class="modal-box">
+    <button class="modal-print-btn" onclick="printLessonPlan()">🖨️ Print</button>
     <button class="modal-close" onclick="closeLessonPlan()">✕</button>
     <div id="lesson-plan-content"></div>
   </div>
@@ -960,10 +1037,7 @@ function mdLiteToHtml(text){
   }).join('')
 }
 
-function openLessonPlan(weekNum, day){
-  const lesson = window.ALL_LESSON_PLANS[currentTerm][weekNum][day]
-  const el = document.getElementById('lesson-plan-content')
-
+function buildLessonPlanHtml(lesson){
   const aosHtml = lesson.aos.map(a=>`<li>${a}</li>`).join('')
   const liHtml = lesson.learningIntentions.map(a=>`<li>${a}</li>`).join('')
   const resourcesHtml = lesson.resources.map(a=>`<li>${a}</li>`).join('')
@@ -981,7 +1055,7 @@ function openLessonPlan(weekNum, day){
     return `<div class="lp-agency-card"><h5>${label}</h5><p><strong>${a.title}</strong></p>${mdLiteToHtml(a.body)}</div>`
   }).join('')
 
-  el.innerHTML = `
+  return `
     <h2 class="lp-title">${lesson.day} — ${lesson.strand}: ${lesson.sessionLabel}</h2>
     <p class="lp-sub">${lesson.topic}</p>
 
@@ -1022,9 +1096,14 @@ function openLessonPlan(weekNum, day){
         <div class="lp-faith-motto">Soli Deo Gloria — To God Alone the Glory</div>
       </div>
     </div>` : ''}
-
-    <p class="lp-print-note">Tip: use your browser's Print (Ctrl/Cmd + P) to save this lesson plan as a PDF.</p>
   `
+}
+
+function openLessonPlan(weekNum, day){
+  const lesson = window.ALL_LESSON_PLANS[currentTerm][weekNum][day]
+  const el = document.getElementById('lesson-plan-content')
+
+  el.innerHTML = buildLessonPlanHtml(lesson) + `<p class="lp-print-note">Tip: use the 🖨️ Print button above to print this lesson plan or save it as a PDF.</p>`
 
   document.getElementById('lesson-plan-overlay').classList.add('open')
 }
@@ -1032,6 +1111,47 @@ function openLessonPlan(weekNum, day){
 function closeLessonPlan(){
   document.getElementById('lesson-plan-overlay').classList.remove('open')
 }
+
+function printLessonPlan(){
+  document.body.classList.add('printing-lesson-plan')
+  window.print()
+}
+
+// ── Print every lesson plan for the current topic, one after another ──
+const DAY_PRINT_ORDER = ['Monday','Tuesday','Wednesday','Thursday','Friday']
+
+function printAllLessonPlans(){
+  const termPlans = window.ALL_LESSON_PLANS[currentTerm]
+  if(!currentTerm || !termPlans){
+    alert('No lesson plans are loaded for this topic yet.')
+    return
+  }
+  const weekNums = Object.keys(termPlans).map(Number).sort((a,b)=>a-b)
+  let combined = ''
+  let count = 0
+  weekNums.forEach(w=>{
+    DAY_PRINT_ORDER.forEach(day=>{
+      const lesson = termPlans[w][day]
+      if(!lesson) return
+      count++
+      combined += `<div class="lp-print-page"><div class="lp-week-tag">Week ${w}</div>${buildLessonPlanHtml(lesson)}</div>`
+    })
+  })
+  if(count === 0){
+    alert('No lesson plans are loaded for this topic yet.')
+    return
+  }
+  document.getElementById('lesson-plan-content').innerHTML = combined
+  document.getElementById('lesson-plan-overlay').classList.add('open')
+  document.body.classList.add('printing-lesson-plan')
+  document.body.classList.add('printing-all-plans')
+  window.print()
+}
+
+window.addEventListener('afterprint', function(){
+  document.body.classList.remove('printing-lesson-plan')
+  document.body.classList.remove('printing-all-plans')
+})
 
 // ── Boot ─────────────────────────────────────────────────
 checkDataAndInit()
