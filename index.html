@@ -1038,20 +1038,29 @@ function mdLiteToHtml(text){
 }
 
 function buildLessonPlanHtml(lesson){
-  const aosHtml = lesson.aos.map(a=>`<li>${a}</li>`).join('')
-  const liHtml = lesson.learningIntentions.map(a=>`<li>${a}</li>`).join('')
-  const resourcesHtml = lesson.resources.map(a=>`<li>${a}</li>`).join('')
-  const mainContentHtml = lesson.mainContent.map((sec,i)=>`
+  const aos = lesson.aos || []
+  const learningIntentions = lesson.learningIntentions || []
+  const resources = lesson.resources || []
+  const mainContent = lesson.mainContent || []
+  const videos = lesson.videos || []
+  const studentAgency = lesson.studentAgency || {}
+
+  const naItem = '<li><em>Not provided for this lesson.</em></li>'
+  const aosHtml = aos.length ? aos.map(a=>`<li>${a}</li>`).join('') : naItem
+  const liHtml = learningIntentions.length ? learningIntentions.map(a=>`<li>${a}</li>`).join('') : naItem
+  const resourcesHtml = resources.length ? resources.map(a=>`<li>${a}</li>`).join('') : naItem
+  const mainContentHtml = mainContent.length ? mainContent.map((sec,i)=>`
     <div class="lp-subblock">
       <strong>${i+1}. ${sec.title}</strong>
-      <ul>${sec.points.map(p=>`<li>${p}</li>`).join('')}</ul>
+      <ul>${(sec.points||[]).map(p=>`<li>${p}</li>`).join('')}</ul>
     </div>
-  `).join('')
-  const videosHtml = lesson.videos.map(v=>`<li><strong>${v.title}</strong> — Search YouTube: "${v.search}" — <em>Suitable because:</em> ${v.why}</li>`).join('')
+  `).join('') : '<p><em>Not provided for this lesson.</em></p>'
+  const videosHtml = videos.length ? videos.map(v=>`<li><strong>${v.title}</strong> — Search YouTube: "${v.search}" — <em>Suitable because:</em> ${v.why}</li>`).join('') : naItem
 
   const agencyKeys = [['art','🎨 Art Focus'],['readWrite','📚 Read & Write Focus'],['technology','💻 Technology Focus'],['watchReview','🎥 Watch & Review Focus']]
   const agencyHtml = agencyKeys.map(([key,label])=>{
-    const a = lesson.studentAgency[key]
+    const a = studentAgency[key]
+    if(!a) return `<div class="lp-agency-card"><h5>${label}</h5><p><em>Not provided for this lesson.</em></p></div>`
     return `<div class="lp-agency-card"><h5>${label}</h5><p><strong>${a.title}</strong></p>${mdLiteToHtml(a.body)}</div>`
   }).join('')
 

@@ -328,7 +328,24 @@ Wonder question: if humans had already been living on most other continents for 
       'Pacific petroglyph artists carved their marks without knowing who would see them centuries later. How does that change the way you think about doing your work faithfully today?',
       'If you could carve ONE thing into a rock that would be read in 1000 years, what would it say?',
     ],
-  },}
+  },
+  resources: [
+    'A4 paper, one square per student (continuing the group quilt from previous weeks)',
+    'Black ink pens or dark wax crayons for confident outlines',
+    'Pencils and erasers for rough sketching',
+    'Reference sheet of Pacific petroglyph motifs (turtle, fish, human figure, canoe/waka, bird, spiral)',
+    'Scrap paper for practising the motif before committing to the final square',
+  ],
+  videos: [
+    { title: 'Pacific petroglyphs and rock art', search: 'Pacific Hawaiian petroglyphs rock art', why: 'Shows real examples of Pacific petroglyphs so students can see the bold, simple carving style before sketching their own.' },
+  ],
+  studentAgency: {
+    art: { title: 'Sketch Your Petroglyph Square', body: `This week's main activity IS the art focus — sketch and ink your petroglyph motif and add it to your group's quilt.\n\n**Reflection Prompt:** What motif did you choose, and what does it say about arriving somewhere new?` },
+    readWrite: { title: 'Explain Your Motif', body: `Write a short explanation of the petroglyph motif you chose and why it connects to Tama's landfall story.\n\n**Word Count Guide:** 80–120 words.\n\n**Reflection Prompt:** Why might carving something in stone make a message last longer than writing it on paper?` },
+    technology: { title: 'Digital Petroglyph Design', body: `Use a simple drawing tool (Canva, Google Drawings) to design a bold, simple-line petroglyph-style motif of your own.\n\n**Reflection Prompt:** What did keeping the design bold and simple, without shading, change about how you drew it?` },
+    watchReview: { title: 'Watch and Note: Rock Art', body: `Watch a short video on real Pacific petroglyphs.\n\n**Search term:** "Pacific Hawaiian petroglyphs rock art"\n\n**Reflection Prompt:** What surprised you about where or how these carvings were made?` },
+  }
+}
 
 ]
 

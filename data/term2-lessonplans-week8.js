@@ -326,7 +326,24 @@ Wonder question: if you had to memorise something important enough that it had t
       'Your blended square combines two traditions into something new. How might God be combining different parts of YOUR life and experience into something that couldn\'t exist any other way?',
       'God \'prepared in advance\' the good works He has for you. What does it feel like to know your life\'s purpose was thought about before you were born?',
     ],
-  },}
+  },
+  resources: [
+    'A4 paper, one square per student (the final square for the group quilt)',
+    'Pencils, erasers, and paint or coloured pencils matching earlier weeks\' palettes',
+    'Students\' completed quilt squares from Weeks 1–7 for reference',
+    'Reference images of contemporary Pacific artists blending traditional and modern styles',
+    'Scrap paper for planning the motif combination before painting',
+  ],
+  videos: [
+    { title: 'Contemporary Pacific art blending traditions', search: 'contemporary Pacific Island artists traditional motifs', why: 'Shows real contemporary Pacific artists combining traditional motifs in new ways, modelling the blending task students are asked to do.' },
+  ],
+  studentAgency: {
+    art: { title: 'Create Your Blended Quilt Square', body: `This week's main activity IS the art focus — combine two earlier motifs into one blended square and add it as the final piece in your group's quilt.\n\n**Reflection Prompt:** Why do your two chosen motifs belong together on this square?` },
+    readWrite: { title: 'Explain Your Blend', body: `Write a short explanation of the two motifs you combined and what their combination says about the whole voyage.\n\n**Word Count Guide:** 100–150 words.\n\n**Reflection Prompt:** How is combining two traditions different from just copying one?` },
+    technology: { title: 'Digital Blended Design', body: `Use a simple drawing tool (Canva, Google Drawings) to layer two motifs from earlier weeks into one digital design.\n\n**Reflection Prompt:** What was harder about combining two ideas than using just one?` },
+    watchReview: { title: 'Watch and Note: Blending Traditions', body: `Watch a short video on contemporary Pacific artists blending traditional and modern styles.\n\n**Search term:** "contemporary Pacific Island artists traditional motifs"\n\n**Reflection Prompt:** What did the artist keep from tradition, and what did they change?` },
+  }
+}
 
 ]
 
