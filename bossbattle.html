@@ -197,8 +197,9 @@ h2{font-family:'Cinzel',serif;font-size:1.2rem;color:var(--gold);letter-spacing:
 <div class="screen active" id="setup">
   <div class="logo">⚓ The Wayfinder's Sea Trial<small>BOSS BATTLE</small></div>
   <div class="week-btns">
-    <button class="btn btn-gold" onclick="startHost(5)">🌊 Host — Week 5 Sea Trial<br><small style="font-weight:400;font-size:.75em">Covers Weeks 1–4</small></button>
-    <button class="btn btn-gold" onclick="startHost(10)">🏆 Host — Week 10 Final Exam<br><small style="font-weight:400;font-size:.75em">Covers Weeks 6–9</small></button>
+    <button class="btn btn-gold" onclick="startHost(5)">🌊 Host — Week 5 Sea Trial<br><small style="font-weight:400;font-size:.75em">Term 2 · Covers Weeks 1–4</small></button>
+    <button class="btn btn-gold" onclick="startHost(10)">🏆 Host — Week 10 Final Exam<br><small style="font-weight:400;font-size:.75em">Term 2 · Covers Weeks 6–9</small></button>
+    <button class="btn btn-gold" onclick="startHost('skybound-5')">🗿 Host — The Lost City Trial<br><small style="font-weight:400;font-size:.75em">Term 3 · Covers Weeks 1–4</small></button>
   </div>
   <div class="divider">— or —</div>
   <button class="btn btn-player" onclick="showJoin()">🛶 Join as Student</button>
@@ -355,11 +356,35 @@ const QUESTIONS = {
     { q:"What does 'Soli Deo Gloria' mean?", opts:["God loves the sea","To God alone the glory","We sail for God","The voyage of faith"], correct:1 },
     { q:"Revelation 21:5 records God saying:", opts:['"I am making everything new!"','"It is finished."','"Come and see."','"Well done, good servant."'], correct:0 },
   ],
+  'skybound-5': [
+    { q:"Who are Southern Africa's first peoples, famous for reading \"spoor\" — footprints, droppings and broken grass — to track animals?", opts:["Ndebele","San","Shona","Zulu"], correct:1 },
+    { q:"What is the name of the ancient dry-stone city that was the capital of a powerful trading kingdom in Zimbabwe, centuries before European contact?", opts:["Mapungubwe","Great Zimbabwe","Thulamela","Bulawayo"], correct:1 },
+    { q:"Which verse says God \"marked out their appointed times in history and the boundaries of their lands\"?", opts:["Acts 17:26","John 3:16","Psalm 23:1","Genesis 1:1"], correct:0 },
+    { q:"The Kariba Dam holds back which major river?", opts:["The Nile","The Zambezi","The Limpopo","The Congo"], correct:1 },
+    { q:"Which internationally renowned Zimbabwean art tradition involves carving figures from stone such as serpentine?", opts:["Shona stone sculpture","San rock art","Ndebele wall art","Beadwork"], correct:0 },
+    { q:"Mapungubwe is famous for a small golden ornament shaped like which animal?", opts:["Elephant","Rhino","Lion","Fish"], correct:1 },
+    { q:"Which of these is NOT typically grown as a subsistence crop by a family plot?", opts:["Maize","Sorghum","Groundnuts","Tobacco"], correct:3 },
+    { q:"Which verse says \"Two are better than one, because they have a good return for their labor\"?", opts:["Ecclesiastes 4:9","Proverbs 3:5","Psalm 100:1","Matthew 5:16"], correct:0 },
+    { q:"What technology lets rangers like Baba Farai coordinate across reserves the size of small countries, without needing phone signal?", opts:["Two-way radios","Smartphones","Satellite TV","Landline telephones"], correct:0 },
+    { q:"Which savanna tree survives the dry season by storing huge amounts of water in its swollen trunk?", opts:["Acacia","Baobab","Mopane","Marula"], correct:1 },
+    { q:"What is the real South African database that can trace a recovered rhino horn back to the exact animal and reserve it came from?", opts:["RhODIS","GPS-Track","RFID-Africa","INTERPOL Net"], correct:0 },
+    { q:"Which verse commands us to \"speak up for those who cannot speak for themselves\"?", opts:["Proverbs 31:8","Psalm 46:1","Isaiah 40:31","Matthew 6:11"], correct:0 },
+    { q:"What period of drought and conflict in the early 1800s caused huge movements of people across Southern Africa, giving rise to the Ndebele Kingdom?", opts:["The Mfecane","The Great Trek","The Scramble for Africa","The Renaissance"], correct:0 },
+    { q:"In a savanna food web, what would most likely happen to lions if the antelope population suddenly crashed?", opts:["Lions would have more food than ever","Lions would struggle to find enough food","Nothing would change for the lions","Lions would start eating grass instead"], correct:1 },
+    { q:"Which school value connects BEST to Tapiwa and Nomvula's ongoing fight to protect rhino, even though \"nobody knows if we can fix this one completely\"?", opts:["Aroha — Love","Mōhio — Know","Manaaki — Serve","Pānga — Impact"], correct:3 },
+  ],
 };
 
 const CLOSING_VERSES = {
   5: { text:"Those who hope in the LORD will renew their strength. They will soar on wings like eagles.", ref:"Isaiah 40:31" },
   10: { text:"He who was seated on the throne said, 'I am making everything new!'", ref:"Revelation 21:5" },
+  'skybound-5': { text:"God is our refuge and strength, an ever-present help in trouble.", ref:"Psalm 46:1" },
+};
+
+const TRIAL_TITLES = {
+  5: { lobby:"🌊 Sea Trial — Boss Battle Week 5", print:"Week 5 Sea Trial" },
+  10: { lobby:"🏆 Wayfinder's Examination — Week 10", print:"Week 10 Wayfinder's Examination" },
+  'skybound-5': { lobby:"🗿 The Lost City Trial — Boss Battle Week 5", print:"The Lost City Trial (Week 5)" },
 };
 
 const BOAT_EMOJIS = ['🛶','⛵','🚤','🛥️','⛴️','🚢','🛳️','🏄','🤿','🐠'];
@@ -405,8 +430,7 @@ function startHost(week) {
   gameQuestions = QUESTIONS[week];
   totalQuestions = gameQuestions.length;
 
-  document.getElementById('lobby-week-title').textContent =
-    week === 5 ? '🌊 Sea Trial — Boss Battle Week 5' : '🏆 Wayfinder\'s Examination — Week 10';
+  document.getElementById('lobby-week-title').textContent = TRIAL_TITLES[week].lobby;
 
   peer = new Peer({ debug: 0 });
 
@@ -691,7 +715,7 @@ function printSummary() {
   const sorted = Object.entries(players).sort((a,b) => b[1].score - a[1].score);
   const qs = gameQuestions;
   const letters = ['A','B','C','D'];
-  const weekTitle = currentWeek === 5 ? 'Week 5 Sea Trial' : 'Week 10 Wayfinder\'s Examination';
+  const weekTitle = TRIAL_TITLES[currentWeek].print;
 
   let html = `<div class="ps-header">⚓ ${weekTitle} — Results Summary</div>
 <div class="ps-sub">The Wayfinder's Journal · Soli Deo Gloria</div>
